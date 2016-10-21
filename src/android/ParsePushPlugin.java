@@ -115,7 +115,19 @@ public class ParsePushPlugin extends CordovaPlugin {
 
    private void subscribe(final String channel, final CallbackContext callbackContext) {
     	ParsePush.subscribeInBackground(channel);
-         callbackContext.success();
+      ParsePush.subscribeInBackground(channel, new SaveCallback() {
+    @Override
+    public void done(ParseException e) {
+        if (e == null) {
+            Log.d("com.parse.push",
+            "successfully subscribed to the "+channel+" channel.");
+           callbackContext.success();
+        } else {
+            Log.e("com.parse.push", "failed to subscribe for push", e);
+        }    
+    }
+});
+         
    }
 
    private void unsubscribe(final String channel, final CallbackContext callbackContext) {

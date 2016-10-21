@@ -114,7 +114,7 @@ public class ParsePushPlugin extends CordovaPlugin {
    }
 
    private void subscribe(final String channel, final CallbackContext callbackContext) {
-    	ParsePush.subscribeInBackground(channel);
+    	//ParsePush.subscribeInBackground(channel);
       ParsePush.subscribeInBackground(channel, new SaveCallback() {
     @Override
     public void done(ParseException e) {

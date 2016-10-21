@@ -125,7 +125,8 @@ public class ParsePushPlugin extends CordovaPlugin {
             "successfully subscribed to the "+channel+" channel.");
            callbackContext.success();
         } else {
-            Log.e("com.parse.push", "failed to subscribe for push", e);
+            Log.e("com.parse.push", "failed to subscribe for push to "+channel, e);
+           callbackContext.error();
         }    
     }
 });
@@ -133,8 +134,19 @@ public class ParsePushPlugin extends CordovaPlugin {
    }
 
    private void unsubscribe(final String channel, final CallbackContext callbackContext) {
-    	ParsePush.unsubscribeInBackground(channel);
-         callbackContext.success();
+
+       ParsePush.unsubscribeInBackground(channel, new SaveCallback() {
+    @Override
+    public void done(ParseException e) {
+        if (e == null) {
+            Log.d("com.parse.push",
+            "successfully unsubscribed from the "+channel+" channel.");
+           callbackContext.success();
+        } else {
+            Log.e("com.parse.push", "failed to unsubscribe for push from "+channel, e);
+           callbackContext.error();
+        }    
+    }
    }
 
    private void registerDeviceForPN(final CallbackContext callbackContext) {

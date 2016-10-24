@@ -74,6 +74,10 @@ var ParsePushPlugin = {
    register: function(successCb, errorCb) {
       cordova.exec(successCb, errorCb, serviceName, 'register', []);
    },
+	
+	 registerUser: function(successCb, errorCb) {
+      cordova.exec(successCb, errorCb, serviceName, 'registerUser', []);
+   },
 };
 
 //

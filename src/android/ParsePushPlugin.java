@@ -150,7 +150,7 @@ public class ParsePushPlugin extends CordovaPlugin {
            callbackContext.success();
         } else {
             Log.e("com.parse.push", "failed to unsubscribe for push from "+channel, e);
-           callbackContext.error();
+            callbackContext.error("Failed to unsubscribe for push to "+channel);
         }    
     }
           });
@@ -166,7 +166,7 @@ public class ParsePushPlugin extends CordovaPlugin {
    private void registerUser(final CallbackContext callbackContext) {
       final ParseUser currentUser = ParseUser.getCurrentUser();
       ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-          installation.set("user", currentUser);
+          installation.put("user", currentUser);
           installation.saveInBackground();
  callbackContext.success();
    }

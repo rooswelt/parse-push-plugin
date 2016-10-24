@@ -152,6 +152,7 @@ public class ParsePushPlugin extends CordovaPlugin {
            callbackContext.error();
         }    
     }
+          });
    }
 
    private void registerDeviceForPN(final CallbackContext callbackContext) {

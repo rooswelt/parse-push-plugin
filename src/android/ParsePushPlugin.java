@@ -18,6 +18,7 @@ import com.parse.Parse;
 import com.parse.ParsePush;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
+import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
 import android.util.Log;
@@ -131,7 +132,7 @@ public class ParsePushPlugin extends CordovaPlugin {
            callbackContext.success();
         } else {
             Log.e("com.parse.push", "failed to subscribe for push to "+channel, e);
-           callbackContext.error();
+           callbackContext.error("Failed to subscribe for push to "+channel);
         }    
     }
 });

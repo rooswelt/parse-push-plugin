@@ -104,6 +104,17 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)registerUser: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult* pluginResult = nil;
+    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
+    NSString *username = [command.arguments objectAtIndex:0];
+    [currentInstallation addUniqueObject:username forKey:@"username"];
+    [currentInstallation saveInBackground];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)resetBadge:(CDVInvokedUrlCommand *)command {
      CDVPluginResult* pluginResult = nil;
      PFInstallation *currentInstallation = [PFInstallation currentInstallation];

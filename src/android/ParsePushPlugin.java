@@ -164,6 +164,7 @@ public class ParsePushPlugin extends CordovaPlugin {
                                          
    private void registerUser(final String username, final CallbackContext callbackContext) {
       ParseInstallation installation = ParseInstallation.getCurrentInstallation();
+      Log.d("Adding username "+username+" to installation object.");
           installation.put("username", username);
           installation.saveInBackground();
  callbackContext.success();

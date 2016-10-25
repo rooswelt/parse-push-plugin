@@ -109,7 +109,7 @@
     CDVPluginResult* pluginResult = nil;
     PFInstallation *currentInstallation = [PFInstallation currentInstallation];
     NSString *username = [command.arguments objectAtIndex:0];
-    [currentInstallation addUniqueObject:username forKey:@"username"];
+    currentInstallation[@"username"] = username;
     [currentInstallation saveInBackground];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];

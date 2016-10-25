@@ -18,7 +18,6 @@ import com.parse.Parse;
 import com.parse.ParsePush;
 import com.parse.ParseException;
 import com.parse.ParseInstallation;
-import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
 import android.util.Log;
@@ -83,7 +82,7 @@ public class ParsePushPlugin extends CordovaPlugin {
          return true;
       }
       if (action.equals(ACTION_REGISTER_USER)) {
-         this.registerUser(callbackContext);
+         this.registerUser(args.getString(0),callbackContext);
          return true;
       }
       return false;
@@ -163,10 +162,9 @@ public class ParsePushPlugin extends CordovaPlugin {
        callbackContext.success();
    }
                                          
-   private void registerUser(final CallbackContext callbackContext) {
-      final ParseUser currentUser = ParseUser.getCurrentUser();
+   private void registerUser(final String username, final CallbackContext callbackContext) {
       ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-          installation.put("user", currentUser);
+          installation.put("username", username);
           installation.saveInBackground();
  callbackContext.success();
    }

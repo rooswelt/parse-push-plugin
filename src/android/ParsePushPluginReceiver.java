@@ -10,6 +10,9 @@ import android.app.PendingIntent;
 import android.app.Notification;
 import android.app.NotificationManager;
 
+import github.taivo.parsepushplugin.ParsePushConfigReader;
+import github.taivo.parsepushplugin.ParsePushConfigException;
+
 import android.support.v4.app.NotificationCompat;
 
 import android.net.Uri;
@@ -22,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
 import java.util.List;
+import java.util.Random;
 
 
 public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver
@@ -35,28 +39,38 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver
 
 	@Override
 	protected void onPushReceive(Context context, Intent intent) {
-      if(ParsePushPlugin.isInForeground()){
-         //
- 	      // relay the push notification data to the javascript
- 		   ParsePushPlugin.jsCallback( getPushData(intent) );
+    if(ParsePushPlugin.isInForeground()){
+      //
+      // relay the push notification data to the javascript
+      ParsePushPlugin.jsCallback( getPushData(intent) );
+    } else {
+      //
+      // only create entry for notification tray if plugin/application is
+      // not running in foreground.
+      //
+      // So first we check if the user has set the configuration to have multiple
+      // notifications show in the tray (i.e. set <preference name="ParseMultiNotifications" value="true" />)
+      ParsePushConfigReader config = new ParsePushConfigReader(context, null, new String[] {"ParseMultiNotifications"});
+      String parseMulti = config.get("ParseMultiNotifications");
+      if(parseMulti != null && !parseMulti.isEmpty() && parseMulti.equals("true")){
+        // If the user wants multiple notifications in the tray, then we let ParsePushBroadcastReceiver
+        // handle it from here
+        super.onPushReceive(context, intent);
       } else {
-		   //
-			// only create entry for notification tray if plugin/application is
-			// not running in foreground.
-			//
-			// use tag + notification id=0 to limit the number of notifications on the tray
-			// (older messages with the same tag and notification id will be replaced)
-			NotificationManager notifManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-			notifManager.notify(getNotificationTag(context, intent), 0, getNotification(context, intent));
+        // use tag + notification id=0 to limit the number of notifications in the tray
+        // (older messages with the same tag and notification id will be replaced)
+        NotificationManager notifManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notifManager.notify(getNotificationTag(context, intent), 0, getNotification(context, intent));
 
-         //
-         // A user with Android 5.0.1 reports that notif is not created in tray when
-         // app is off (not background), trying method described here
-         // https://github.com/phonegap/phonegap-plugin-push/issues/211 by @vikasing
-         // to see if it works
-         //
-         intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-         setResultCode(Activity.RESULT_OK);
+        //
+        // A user with Android 5.0.1 reports that notif is not created in tray when
+        // app is off (not background), trying method described here
+        // https://github.com/phonegap/phonegap-plugin-push/issues/211 by @vikasing
+        // to see if it works
+        //
+        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+        setResultCode(Activity.RESULT_OK);
+      }
 		}
 	}
 
@@ -106,9 +120,19 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver
 		cIntent.putExtras(intent).setPackage(context.getPackageName());
 		dIntent.putExtras(intent).setPackage(context.getPackageName());
 
-		PendingIntent contentIntent = PendingIntent.getBroadcast(context, 0, cIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		PendingIntent deleteIntent  = PendingIntent.getBroadcast(context, 0, dIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		int contentIntentRequestCode = 0;
+    int deleteIntentRequestCode = 0;
 
+    ParsePushConfigReader config = new ParsePushConfigReader(context, null, new String[] {"ParseMultiNotifications"});
+    String parseMulti = config.get("ParseMultiNotifications");
+    if(parseMulti != null && !parseMulti.isEmpty() && parseMulti.equals("true")){
+      Random random = new Random();
+      contentIntentRequestCode = random.nextInt();
+      deleteIntentRequestCode = random.nextInt();
+    }
+
+    PendingIntent contentIntent = PendingIntent.getBroadcast(context, contentIntentRequestCode, cIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent deleteIntent  = PendingIntent.getBroadcast(context, deleteIntentRequestCode, dIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
 
@@ -134,7 +158,7 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver
              } catch (JSONException e) {
                   Log.e(LOGTAG, "JSONException while parsing Increment:", e);
              }
- 
+
              try {
                  if (pnData.getInt("badge") >= 0) {
                      badgeCount = pnData.getInt("badge");
@@ -142,7 +166,7 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver
              } catch (JSONException e) {
                   Log.e(LOGTAG, "JSONException while parsing badge:", e);
              }
-             
+
             setBadge(context, badgeCount);
          }
 
@@ -261,7 +285,7 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver
 	             return className;
 	         }
 	    }
-	    
+
 	    return null;
 	 }
 }

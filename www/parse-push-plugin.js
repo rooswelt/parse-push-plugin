@@ -1,50 +1,5 @@
 var serviceName = 'ParsePushPlugin';
 
-//
-// establish an exec bridge so native code can call javascript
-// when a PN event occurs
-//
-require('cordova/channel').onCordovaReady.subscribe(function() {
-	var jsCallback = function(pn, pushAction) {
-		console.log('PIPPO');
-      if(ParsePushPlugin.DEBUG){
-         console.log("Cordova callback: " + pushAction + "|" + JSON.stringify(pn));
-      }
-
-		if(pn !== null){
-			if(pushAction === 'OPEN'){
-				//
-				// trigger a callback when user click open a notification.
-				// One usecase for this pertains a cordova app that is already running in the background.
-				// Relaying a push OPEN action, allows the app to resume and use javascript to navigate
-				// to a different screen.
-				//
-            ParsePushPlugin.softTrigger(ParsePushPlugin._openEvent, pn);
-			} else{
-				//
-				//an eventKey can be registered with the register() function to trigger
-				//additional javascript callbacks when a notification is received.
-				//This helps modularizes notification handling for different aspects
-				//of your javascript app, e.g., receivePN:chat, receivePN:system, etc.
-				//
-				var base = ParsePushPlugin._receiveEvent;
-				var customEventKey = ParsePushPlugin._customEventKey;
-
-				ParsePushPlugin.softTrigger(base, pn);
-				if(customEventKey && pn[customEventKey]){
-					ParsePushPlugin.softTrigger(base + ':' + pn[customEventKey], pn);
-				}
-			}
-		}
-   };
-	
-	var jsErrorCallback = function (error) {
-		console.log('An error occured when calling back javascript '+JSON.stringify(error));
-	};
-
-   require('cordova/exec')(jsCallback, jsErrorCallback, serviceName, 'registerCallback', []);
-});
-
 var ParsePushPlugin = {
 	_openEvent: 'openPN',
 	_receiveEvent: 'receivePN',
@@ -239,3 +194,51 @@ var EventMixin = {
 };
 
 module.exports = poorManExtend(ParsePushPlugin, EventMixin);
+
+//
+// establish an exec bridge so native code can call javascript
+// when a PN event occurs
+//
+require('cordova/channel').onCordovaReady.subscribe(function() {
+	var jsCallback = function(pn, pushAction) {
+		if(!ParsePushPlugin){
+			console.log('Javascript object not init!');
+		}
+		
+      if(ParsePushPlugin.DEBUG){
+         console.log("Cordova callback: " + pushAction + "|" + JSON.stringify(pn));
+      }
+
+		if(pn !== null){
+			if(pushAction === 'OPEN'){
+				//
+				// trigger a callback when user click open a notification.
+				// One usecase for this pertains a cordova app that is already running in the background.
+				// Relaying a push OPEN action, allows the app to resume and use javascript to navigate
+				// to a different screen.
+				//
+            ParsePushPlugin.softTrigger(ParsePushPlugin._openEvent, pn);
+			} else{
+				//
+				//an eventKey can be registered with the register() function to trigger
+				//additional javascript callbacks when a notification is received.
+				//This helps modularizes notification handling for different aspects
+				//of your javascript app, e.g., receivePN:chat, receivePN:system, etc.
+				//
+				var base = ParsePushPlugin._receiveEvent;
+				var customEventKey = ParsePushPlugin._customEventKey;
+
+				ParsePushPlugin.softTrigger(base, pn);
+				if(customEventKey && pn[customEventKey]){
+					ParsePushPlugin.softTrigger(base + ':' + pn[customEventKey], pn);
+				}
+			}
+		}
+   };
+	
+	var jsErrorCallback = function (error) {
+		console.log('An error occured when calling back javascript '+JSON.stringify(error));
+	};
+
+   require('cordova/exec')(jsCallback, jsErrorCallback, serviceName, 'registerCallback', []);
+});

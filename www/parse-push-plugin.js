@@ -193,7 +193,7 @@ var EventMixin = {
       if(this._callbacks){
          this.trigger.apply(this, arguments);
       } else{
-	      console.log('No callbacks found, retry");
+	      console.log("No callbacks found, retry");
          var self = this;
          var triggerArgs = arguments;
          window.setTimeout(function(){

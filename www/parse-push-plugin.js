@@ -6,6 +6,7 @@ var serviceName = 'ParsePushPlugin';
 //
 require('cordova/channel').onCordovaReady.subscribe(function() {
 	var jsCallback = function(pn, pushAction) {
+		console.log('PIPPO');
       if(ParsePushPlugin.DEBUG){
          console.log("Cordova callback: " + pushAction + "|" + JSON.stringify(pn));
       }
@@ -36,8 +37,12 @@ require('cordova/channel').onCordovaReady.subscribe(function() {
 			}
 		}
    };
+	
+	var jsErrorCallback = function (error) {
+		console.log('An error occured when calling back javascript '+JSON.stringify(error));
+	};
 
-   require('cordova/exec')(jsCallback, null, serviceName, 'registerCallback', []);
+   require('cordova/exec')(jsCallback, jsErrorCallback, serviceName, 'registerCallback', []);
 });
 
 var ParsePushPlugin = {

@@ -57,7 +57,7 @@ function poorManExtend(object, source){
 var eventSplitter = /\s+/;
 var slice = Array.prototype.slice;
 var EventMixin = {
-   _coldStartDelayMs: 200,
+   _coldStartDelayMs: 1000,
 	on: function(events, callback, context) {
 
       var calls, event, node, tail, list;
@@ -141,9 +141,8 @@ var EventMixin = {
 
       var event, node, calls, tail, args, all, rest;
       if (!(calls = this._callbacks)) {
-	      if(this.DEBUG){
-         console.log("Che succede qui???");
-      }
+	     if(this.DEBUG){
+		     console.log("No callbacks found, maybe your application is taking too long time to load?");
          return this;
       }
 	    
@@ -194,11 +193,13 @@ var EventMixin = {
       if(this._callbacks){
          this.trigger.apply(this, arguments);
       } else{
+	      console.log('No callbacks found, retry");
          var self = this;
          var triggerArgs = arguments;
          window.setTimeout(function(){
-            self.trigger.apply(self, triggerArgs);
-         }, self._coldStartDelayMs || 200);
+            //self.trigger.apply(self, triggerArgs);
+		 self.softTrigger(events);
+         }, self._coldStartDelayMs || 1000);
       }
    }
 };

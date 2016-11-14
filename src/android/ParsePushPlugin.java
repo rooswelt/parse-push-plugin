@@ -47,7 +47,7 @@ public class ParsePushPlugin extends CordovaPlugin {
     	   gEventCallback = callbackContext;
 
            if(!pnQueue.isEmpty()){
-              flushPNQueue();
+              flushPNQueue(callbackContext);
            }
     	   return true;
       }
@@ -199,9 +199,9 @@ public class ParsePushPlugin extends CordovaPlugin {
       }
    }
 
-   private static void flushPNQueue(){
-      while(!pnQueue.isEmpty() && gEventCallback != null){
-         gEventCallback.sendPluginResult(pnQueue.remove());
+   private static void flushPNQueue(CallbackContext callbackContext){
+      while(!pnQueue.isEmpty() && callbackContext != null){
+         callbackContext.sendPluginResult(pnQueue.remove());
       }
    }
 

@@ -1,4 +1,3 @@
-cordova.define("parse-push-plugin.ParsePushPlugin", function(require, exports, module) {
   var serviceName = 'ParsePushPlugin';
 
   var ParsePushPlugin = {
@@ -251,5 +250,3 @@ cordova.define("parse-push-plugin.ParsePushPlugin", function(require, exports, m
 
     require('cordova/exec')(jsCallback, jsErrorCallback, serviceName, 'registerCallback', []);
   });
-
-});

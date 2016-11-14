@@ -97,7 +97,7 @@ function poorManExtend(object, source){
 var eventSplitter = /\s+/;
 var slice = Array.prototype.slice;
 var EventMixin = {
-   _coldStartDelayMs: 200,
+   _coldStartDelayMs: 2000,
 	on: function(events, callback, context) {
 
       var calls, event, node, tail, list;
@@ -228,7 +228,7 @@ var EventMixin = {
          var triggerArgs = arguments;
          window.setTimeout(function(){
             self.trigger.apply(self, triggerArgs);
-         }, self._coldStartDelayMs || 200);
+         }, self._coldStartDelayMs || 2000);
       }
    }
 };

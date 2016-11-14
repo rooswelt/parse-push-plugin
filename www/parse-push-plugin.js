@@ -1,64 +1,65 @@
-var serviceName = 'ParsePushPlugin';
+cordova.define("parse-push-plugin.ParsePushPlugin", function(require, exports, module) {
+  var serviceName = 'ParsePushPlugin';
 
-var ParsePushPlugin = {
-	_openEvent: 'openPN',
-	_receiveEvent: 'receivePN',
-	_customEventKey: 'event', //default key for custom events associated with each PN, set this to anything you see fit
+  var ParsePushPlugin = {
+    _openEvent: 'openPN',
+    _receiveEvent: 'receivePN',
+    _customEventKey: 'event', //default key for custom events associated with each PN, set this to anything you see fit
 
-   DEBUG: true,
+    DEBUG: false,
 
-   getInstallationId: function(successCb, errorCb) {
+    getInstallationId: function(successCb, errorCb) {
       cordova.exec(successCb, errorCb, serviceName, 'getInstallationId', []);
-   },
+    },
 
-   getInstallationObjectId: function(successCb, errorCb) {
+    getInstallationObjectId: function(successCb, errorCb) {
       cordova.exec(successCb, errorCb, serviceName, 'getInstallationObjectId', []);
-   },
+    },
 
-   getSubscriptions: function(successCb, errorCb) {
+    getSubscriptions: function(successCb, errorCb) {
       cordova.exec(successCb, errorCb, serviceName, 'getSubscriptions', []);
-   },
+    },
 
-   subscribe: function(channel, successCb, errorCb) {
-      cordova.exec(successCb, errorCb, serviceName, 'subscribe', [ channel ]);
-   },
+    subscribe: function(channel, successCb, errorCb) {
+      cordova.exec(successCb, errorCb, serviceName, 'subscribe', [channel]);
+    },
 
-   unsubscribe: function(channel, successCb, errorCb) {
-      cordova.exec(successCb, errorCb, serviceName, 'unsubscribe', [ channel ]);
-   },
-   
-   resetBadge: function(successCb, errorCb) {
-       cordova.exec(successCb, errorCb, serviceName, 'resetBadge', []);
-   },
+    unsubscribe: function(channel, successCb, errorCb) {
+      cordova.exec(successCb, errorCb, serviceName, 'unsubscribe', [channel]);
+    },
 
-   register: function(successCb, errorCb) {
+    resetBadge: function(successCb, errorCb) {
+      cordova.exec(successCb, errorCb, serviceName, 'resetBadge', []);
+    },
+
+    register: function(successCb, errorCb) {
       cordova.exec(successCb, errorCb, serviceName, 'register', []);
-   },
-	
-	 registerUser: function(username, successCb, errorCb) {
+    },
+
+    registerUser: function(username, successCb, errorCb) {
       cordova.exec(successCb, errorCb, serviceName, 'registerUser', [username]);
-   },
-};
+    },
+  };
 
-//
-// give ParsePushPlugin event handling capability so we can use it to trigger
-// push notification onReceive events
-function poorManExtend(object, source){
-	object || (object = {});
+  //
+  // give ParsePushPlugin event handling capability so we can use it to trigger
+  // push notification onReceive events
+  function poorManExtend(object, source) {
+    object || (object = {});
 
-	for (var prop in source) {
-	    if(source.hasOwnProperty(prop)) {
-	       object[prop] = source[prop];
-	    }
-	}
-	return object;
-}
+    for (var prop in source) {
+      if (source.hasOwnProperty(prop)) {
+        object[prop] = source[prop];
+      }
+    }
+    return object;
+  }
 
-var eventSplitter = /\s+/;
-var slice = Array.prototype.slice;
-var EventMixin = {
-   _coldStartDelayMs: 1000,
-	on: function(events, callback, context) {
+  var eventSplitter = /\s+/;
+  var slice = Array.prototype.slice;
+  var EventMixin = {
+    _coldStartDelayMs: 500,
+    on: function(events, callback, context) {
 
       var calls, event, node, tail, list;
       if (!callback) {
@@ -77,7 +78,10 @@ var EventMixin = {
         node.next = tail = {};
         node.context = context;
         node.callback = callback;
-        calls[event] = {tail: tail, next: list ? list.next : node};
+        calls[event] = {
+          tail: tail,
+          next: list ? list.next : node
+        };
         event = events.shift();
       }
       return this;
@@ -135,26 +139,17 @@ var EventMixin = {
      * receive the true name of the event as the first argument).
      */
     trigger: function(events) {
-      if(this.DEBUG){
-         console.log("enter ParsePushPlugin.trigger: " + events);
+      if (this.DEBUG) {
+        console.log("enter ParsePushPlugin.trigger: " + events);
       }
 
       var event, node, calls, tail, args, all, rest;
       if (!(calls = this._callbacks)) {
-	     if(this.DEBUG){
-		     console.log("No callbacks found, maybe your application is taking too long time to load?");
-         return this;
+        return this;
       }
-	    
       all = calls.all;
       events = events.split(eventSplitter);
       rest = slice.call(arguments, 1);
-	     if(this.DEBUG){
-         console.log("all: "+JSON.stringify(all));
-		              console.log("events: "+JSON.stringify(events));
-		              console.log("rest: "+JSON.stringify(rest));
-      }
-	    
 
       // For each event, walk through the linked list of callbacks twice,
       // first to trigger the event, then to trigger any `"all"` callbacks.
@@ -178,78 +173,83 @@ var EventMixin = {
         event = events.shift();
       }
 
-      if(this.DEBUG){
-         console.log("exit ParsePushPlugin.trigger: " + events);
+      if (this.DEBUG) {
+        console.log("exit ParsePushPlugin.trigger: " + events);
       }
       return this;
-   },
+    },
 
-   softTrigger: function(events){
+    softTrigger: function(events) {
       //helps the cold-start case by allowing the main app some extra time
       //to setup notification handlers.
       //Note: this is a 95% solution and wouldn't work for extreme cases
       //where the main app takes too long to setup handlers.
       //
-      if(this._callbacks){
-         this.trigger.apply(this, arguments);
-      } else{
-	      console.log("No callbacks found, retry");
-         var self = this;
-         var triggerArgs = arguments;
-         window.setTimeout(function(){
-            //self.trigger.apply(self, triggerArgs);
-		 self.softTrigger(events);
-         }, self._coldStartDelayMs || 1000);
+
+      if (this._callbacks) {
+        this.trigger.apply(this, arguments);
+      } else {
+        if (this.DEBUG) {
+          console.log("SoftTrigger - No callbacks found, retry");
+        }
+        var self = this;
+        var triggerArgs = arguments;
+        var triggerEvents = events;
+        window.setTimeout(function() {
+          self.softTrigger.apply(self, triggerArgs);
+        }, self._coldStartDelayMs || 500);
       }
-   }
-};
+    }
+  };
 
-module.exports = poorManExtend(ParsePushPlugin, EventMixin);
+  module.exports = poorManExtend(ParsePushPlugin, EventMixin);
 
-//
-// establish an exec bridge so native code can call javascript
-// when a PN event occurs
-//
-require('cordova/channel').onCordovaReady.subscribe(function() {
-	var jsCallback = function(pn, pushAction) {
-		if(!ParsePushPlugin){
-			console.log('Javascript object not init!');
-		}
-		
-      if(ParsePushPlugin.DEBUG){
-         console.log("Cordova callback: " + pushAction + "|" + JSON.stringify(pn));
+  //
+  // establish an exec bridge so native code can call javascript
+  // when a PN event occurs
+  //
+  require('cordova/channel').onCordovaReady.subscribe(function() {
+    var jsCallback = function(pn, pushAction) {
+      if (!ParsePushPlugin) {
+        console.log('Javascript object not init!');
       }
 
-		if(pn !== null){
-			if(pushAction === 'OPEN'){
-				//
-				// trigger a callback when user click open a notification.
-				// One usecase for this pertains a cordova app that is already running in the background.
-				// Relaying a push OPEN action, allows the app to resume and use javascript to navigate
-				// to a different screen.
-				//
-            ParsePushPlugin.softTrigger(ParsePushPlugin._openEvent, pn);
-			} else{
-				//
-				//an eventKey can be registered with the register() function to trigger
-				//additional javascript callbacks when a notification is received.
-				//This helps modularizes notification handling for different aspects
-				//of your javascript app, e.g., receivePN:chat, receivePN:system, etc.
-				//
-				var base = ParsePushPlugin._receiveEvent;
-				var customEventKey = ParsePushPlugin._customEventKey;
+      if (ParsePushPlugin.DEBUG) {
+        console.log("Cordova callback: " + pushAction + "|" + JSON.stringify(pn));
+      }
 
-				ParsePushPlugin.softTrigger(base, pn);
-				if(customEventKey && pn[customEventKey]){
-					ParsePushPlugin.softTrigger(base + ':' + pn[customEventKey], pn);
-				}
-			}
-		}
-   };
-	
-	var jsErrorCallback = function (error) {
-		console.log('An error occured when calling back javascript '+JSON.stringify(error));
-	};
+      if (pn !== null) {
+        if (pushAction === 'OPEN') {
+          //
+          // trigger a callback when user click open a notification.
+          // One usecase for this pertains a cordova app that is already running in the background.
+          // Relaying a push OPEN action, allows the app to resume and use javascript to navigate
+          // to a different screen.
+          //
+          ParsePushPlugin.softTrigger(ParsePushPlugin._openEvent, pn);
+        } else {
+          //
+          //an eventKey can be registered with the register() function to trigger
+          //additional javascript callbacks when a notification is received.
+          //This helps modularizes notification handling for different aspects
+          //of your javascript app, e.g., receivePN:chat, receivePN:system, etc.
+          //
+          var base = ParsePushPlugin._receiveEvent;
+          var customEventKey = ParsePushPlugin._customEventKey;
 
-   require('cordova/exec')(jsCallback, jsErrorCallback, serviceName, 'registerCallback', []);
+          ParsePushPlugin.softTrigger(base, pn);
+          if (customEventKey && pn[customEventKey]) {
+            ParsePushPlugin.softTrigger(base + ':' + pn[customEventKey], pn);
+          }
+        }
+      }
+    };
+
+    var jsErrorCallback = function(error) {
+      console.log('An error occured when calling back javascript ' + JSON.stringify(error));
+    };
+
+    require('cordova/exec')(jsCallback, jsErrorCallback, serviceName, 'registerCallback', []);
+  });
+
 });

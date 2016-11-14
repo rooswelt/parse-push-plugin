@@ -57,7 +57,7 @@ function poorManExtend(object, source){
 var eventSplitter = /\s+/;
 var slice = Array.prototype.slice;
 var EventMixin = {
-   _coldStartDelayMs: 2000,
+   _coldStartDelayMs: 200,
 	on: function(events, callback, context) {
 
       var calls, event, node, tail, list;
@@ -141,11 +141,21 @@ var EventMixin = {
 
       var event, node, calls, tail, args, all, rest;
       if (!(calls = this._callbacks)) {
+	      if(this.DEBUG){
+         console.log("Che succede qui???");
+      }
          return this;
       }
+	    
       all = calls.all;
       events = events.split(eventSplitter);
       rest = slice.call(arguments, 1);
+	     if(this.DEBUG){
+         console.log("all: "+JSON.stringify(all));
+		              console.log("events: "+JSON.stringify(events));
+		              console.log("rest: "+JSON.stringify(rest));
+      }
+	    
 
       // For each event, walk through the linked list of callbacks twice,
       // first to trigger the event, then to trigger any `"all"` callbacks.
@@ -188,7 +198,7 @@ var EventMixin = {
          var triggerArgs = arguments;
          window.setTimeout(function(){
             self.trigger.apply(self, triggerArgs);
-         }, self._coldStartDelayMs || 2000);
+         }, self._coldStartDelayMs || 200);
       }
    }
 };

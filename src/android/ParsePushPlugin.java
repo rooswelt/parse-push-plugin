@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Queue;
 import java.util.LinkedList;
-import java.util.Collections;
 import java.lang.Exception;
 
 import org.apache.cordova.CallbackContext;
@@ -120,59 +119,28 @@ public class ParsePushPlugin extends CordovaPlugin {
          }
       });
    }
-   
+
    private void subscribe(final String channel, final CallbackContext callbackContext) {
     	//ParsePush.subscribeInBackground(channel);
-      ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-      List<String> channels = installation.getList("channels");
-      if (channels == null
-          || installation.isDirty("channels")
-          || !channels.contains(channel)) {
-        installation.addUnique("channels", channel);
-        installation.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e == null) {
-                    Log.d("com.parse.push",
-                    "successfully subscribed to the "+channel+" channel.");
-                   callbackContext.success();
-                } else {
-                    Log.e("com.parse.push", "failed to subscribe for push to "+channel, e);
-                   callbackContext.error("Failed to subscribe for push to "+channel);
-                }    
-            }
-        });
-      } else {
-        Log.e("com.parse.push", "Failed to subscribe for push to "+channel);
-         callbackContext.error("Failed to subscribe for push to "+channel);
-      }
+      ParsePush.subscribeInBackground(channel, new SaveCallback() {
+    @Override
+    public void done(ParseException e) {
+        if (e == null) {
+            Log.d("com.parse.push",
+            "successfully subscribed to the "+channel+" channel.");
+           callbackContext.success();
+        } else {
+            Log.e("com.parse.push", "failed to subscribe for push to "+channel, e);
+           callbackContext.error("Failed to subscribe for push to "+channel);
+        }    
+    }
+});
+         
    }
 
    private void unsubscribe(final String channel, final CallbackContext callbackContext) {
-     ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-      List<String> channels = installation.getList("channels");
-        if (channels != null && channels.contains(channel)) {
-          installation.removeAll(
-              "channels", Collections.singletonList(channel));
-        installation.saveInBackground(new SaveCallback() {
-            @Override
-            public void done(ParseException e) {
-                if (e == null) {
-                    Log.d("com.parse.push",
-                   "successfully unsubscribed from the "+channel+" channel.");
-                   callbackContext.success();
-                } else {
-                  Log.e("com.parse.push", "failed to unsubscribe for push from "+channel, e);
-                  callbackContext.error("Failed to unsubscribe for push to "+channel);
-                }    
-            }
-        });
-      } else {
-       Log.e("com.parse.push", "Failed to unsubscribe for push from "+channel);
-       callbackContext.error("Failed to unsubscribe for push to "+channel);
-      }
 
-       /*ParsePush.unsubscribeInBackground(channel, new SaveCallback() {
+       ParsePush.unsubscribeInBackground(channel, new SaveCallback() {
     @Override
     public void done(ParseException e) {
         if (e == null) {
@@ -184,7 +152,7 @@ public class ParsePushPlugin extends CordovaPlugin {
             callbackContext.error("Failed to unsubscribe for push to "+channel);
         }    
     }
-          });*/
+          });
    }
 
    private void registerDeviceForPN(final CallbackContext callbackContext) {

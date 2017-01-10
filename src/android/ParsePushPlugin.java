@@ -129,7 +129,7 @@ public class ParsePushPlugin extends CordovaPlugin {
           || installation.isDirty(ParseInstallation.KEY_CHANNELS)
           || !channels.contains(channel)) {
         installation.addUnique(ParseInstallation.KEY_CHANNELS, channel);
-        installation.saveInBackground(, new SaveCallback() {
+        installation.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
                 if (e == null) {
@@ -154,7 +154,7 @@ public class ParsePushPlugin extends CordovaPlugin {
         if (channels != null && channels.contains(channel)) {
           installation.removeAll(
               ParseInstallation.KEY_CHANNELS, Collections.singletonList(channel));
-        installation.saveInBackground(, new SaveCallback() {
+        installation.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
                 if (e == null) {

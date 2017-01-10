@@ -124,11 +124,11 @@ public class ParsePushPlugin extends CordovaPlugin {
    private void subscribe(final String channel, final CallbackContext callbackContext) {
     	//ParsePush.subscribeInBackground(channel);
       ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-      List<String> channels = installation.getList(ParseInstallation.KEY_CHANNELS);
+      List<String> channels = installation.getList("channels");
       if (channels == null
-          || installation.isDirty(ParseInstallation.KEY_CHANNELS)
+          || installation.isDirty("channels")
           || !channels.contains(channel)) {
-        installation.addUnique(ParseInstallation.KEY_CHANNELS, channel);
+        installation.addUnique("channels", channel);
         installation.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {
@@ -150,10 +150,10 @@ public class ParsePushPlugin extends CordovaPlugin {
 
    private void unsubscribe(final String channel, final CallbackContext callbackContext) {
      ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-      List<String> channels = installation.getList(ParseInstallation.KEY_CHANNELS);
+      List<String> channels = installation.getList("channels");
         if (channels != null && channels.contains(channel)) {
           installation.removeAll(
-              ParseInstallation.KEY_CHANNELS, Collections.singletonList(channel));
+              "channels", Collections.singletonList(channel));
         installation.saveInBackground(new SaveCallback() {
             @Override
             public void done(ParseException e) {

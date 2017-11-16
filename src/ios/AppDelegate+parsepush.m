@@ -4,6 +4,8 @@
 #import <Parse/Parse.h>
 #import <objc/runtime.h>
 
+#define DEBUG_PARSE 1
+
 @implementation AppDelegate(parsepush)
 void MethodSwizzle(Class c, SEL originalSelector) {
     NSString *selectorString = NSStringFromSelector(originalSelector);
@@ -123,6 +125,15 @@ void MethodSwizzle(Class c, SEL originalSelector) {
             configuration.server = serverUrl;
             configuration.clientKey = clientKey;
          }]];
+          
+#if DEBUG_PARSE
+          [Parse setLogLevel:PFLogLevelDebug];
+          
+          [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(receiveWillSendURLRequestNotification:) name:PFNetworkWillSendURLRequestNotification object:nil];
+          // Register observer and selector to receive the response we get from server
+          [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(receiveDidReceiveURLResponseNotification:) name:PFNetworkDidReceiveURLResponseNotification object:nil];
+          
+#endif
       }
 
       if(!autoReg.length || [autoReg caseInsensitiveCompare:@"true"] == 0 || [application isRegisteredForRemoteNotifications]){
@@ -137,6 +148,21 @@ void MethodSwizzle(Class c, SEL originalSelector) {
 	}
 
    return isOk;
+}
+
+- (void)receiveWillSendURLRequestNotification:(NSNotification *) notification {
+    // Use key to get the NSURLRequest from userInfo
+    NSURLRequest *request = notification.userInfo[PFNetworkNotificationURLRequestUserInfoKey];
+    NSLog(@"request: %@",request);
+}
+
+- (void)receiveDidReceiveURLResponseNotification:(NSNotification *) notification {
+    // Use key to get the NSURLRequest from userInfo
+    NSURLRequest *request = notification.userInfo[PFNetworkNotificationURLRequestUserInfoKey];
+    // Use key to get the NSURLResponse from userInfo
+    NSURLResponse *response = notification.userInfo[PFNetworkNotificationURLResponseUserInfoKey];
+    NSString *responseBody = notification.userInfo[PFNetworkNotificationURLResponseBodyUserInfoKey];
+    NSLog(@"request: %@,%@,%@",request,response,responseBody);
 }
 
 - (void)swizzled_application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)newDeviceToken

@@ -139,7 +139,7 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver {
     Notification.Builder builder = new Notification.Builder(context);
     NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      String id = "w01", name = pnData.optString("title");
+      String id = "ParseMultiNotification", name = pnData.optString("title");
       int importance = NotificationManager.IMPORTANCE_DEFAULT;
       String desc = pnData.optString("alert");
 

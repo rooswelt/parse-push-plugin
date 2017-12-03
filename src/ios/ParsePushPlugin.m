@@ -86,7 +86,22 @@
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
-
+- (void)unsubscribeAll: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult* pluginResult = nil;
+    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
+    NSString *channel = [command.arguments objectAtIndex:0];
+    
+    NSMutableArray *channels = [[PFInstallation currentInstallation].channels mutableCopy];
+    [channels removeAllObjects];
+    [channels addObject:channel];
+    [currentInstallation setObject:channels forKey:@"channels"];
+    
+    currentInstallation[@"municipality"] = @([channel integerValue]);
+    [currentInstallation saveInBackground];
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
 - (void)resetBadge:(CDVInvokedUrlCommand *)command {
      CDVPluginResult* pluginResult = nil;
      PFInstallation *currentInstallation = [PFInstallation currentInstallation];

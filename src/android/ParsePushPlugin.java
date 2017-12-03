@@ -26,6 +26,7 @@ public class ParsePushPlugin extends CordovaPlugin {
   private static final String ACTION_GET_SUBSCRIPTIONS = "getSubscriptions";
   private static final String ACTION_SUBSCRIBE = "subscribe";
   private static final String ACTION_UNSUBSCRIBE = "unsubscribe";
+   private static final String ACTION_UNSUBSCRIBE_ALL = "unsubscribeAll";
   private static final String ACTION_REGISTER_CALLBACK = "registerCallback";
   private static final String ACTION_REGISTER_FOR_PN = "register";
   public static final String ACTION_RESET_BADGE = "resetBadge";
@@ -69,6 +70,10 @@ public class ParsePushPlugin extends CordovaPlugin {
     }
     if (action.equals(ACTION_UNSUBSCRIBE)) {
       this.unsubscribe(args.getString(0), callbackContext);
+      return true;
+    }
+    if (action.equals(ACTION_UNSUBSCRIBE_ALL)) {
+      this.unsubscribeAll(args.getString(0), callbackContext);
       return true;
     }
     if (action.equals(ACTION_RESET_BADGE)) {
@@ -122,6 +127,25 @@ public class ParsePushPlugin extends CordovaPlugin {
     ParsePush.unsubscribeInBackground(channel);
     callbackContext.success();
   }
+  
+  private void unsubscribeAll(final String channel, final CallbackContext callbackContext) {
+  
+    cordova.getThreadPool().execute(new Runnable() {
+      public void run() {
+        List<String> subscriptions = ParseInstallation.getCurrentInstallation().getList("channels");
+        if (subscriptions != null) {
+            for (String channelStr : subscriptions) {
+                ParsePush.unsubscribeInBackground(channelStr);
+            }
+        }
+        ParseInstallation.getCurrentInstallation().put("municipality", Integer.parseInt(channel));        
+        ParsePush.subscribeInBackground(channel);
+        callbackContext.success();
+      }
+    });
+  
+  }
+
 
   private void registerDeviceForPN(final CallbackContext callbackContext) {
     //

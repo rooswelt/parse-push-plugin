@@ -93,8 +93,9 @@
     NSString *channel = [command.arguments objectAtIndex:0];
     
     NSMutableArray *channels = [[PFInstallation currentInstallation].channels mutableCopy];
+    if (!channels) channels = [NSMutableArray array];
     [channels removeAllObjects];
-    [channels addObject:channel];
+    if (channel) [channels addObject:channel];
     [currentInstallation setObject:channels forKey:@"channels"];
     
     currentInstallation[@"municipality"] = @([channel integerValue]);

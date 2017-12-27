@@ -53,7 +53,6 @@ public class ParsePushPlugin extends CordovaPlugin {
       }
       return true;
     }
-    return true;
 
     if (action.equals(ACTION_GET_INSTALLATION_ID)) {
       this.getInstallationId(callbackContext);

@@ -6,9 +6,11 @@ Parse.Push plugin for Cordova/Phonegap/ionic. Works for both hosted Parse.com an
 
 ## Highlights
 
-#### Work with [Parse.com](https://parse.com) and [parse-server](https://github.com/ParsePlatform/parse-server)
+#### Works with [Parse.com](https://parse.com) and [parse-server](https://github.com/ParsePlatform/parse-server)
 
-#### Handle cold start out-of-the-box
+#### Supports Android and iOs 8, 9, 10
+
+#### Handles cold start out-of-the-box
 
 #### Simple Setup
 
@@ -309,6 +311,13 @@ The comments contain all the explanations and hints you will need. Mimic the cod
       </resources>
    ```
 
+You can provide a property `ParseNotificationIcon` in `config.xml` to provide a custom android notification icon for Android Lollipop and above like this:
+
+```xml
+    <preference name="ParseNotificationIcon" value="android_notification_icon" />
+```
+
+The icon has to be in folder `resources` in project root and with extension `.png`. The icon is then copied to `platforms/android/res/drawable/<PROVIDED-NAME>.png`. For details, how to design the icon have a look at https://clevertap.com/blog/fixing-notification-icon-for-android-lollipop-and-above/
 
 #### iOS:
 

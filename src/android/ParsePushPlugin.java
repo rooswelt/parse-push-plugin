@@ -23,217 +23,224 @@ import com.parse.SaveCallback;
 import android.util.Log;
 
 public class ParsePushPlugin extends CordovaPlugin {
-   private static final String ACTION_GET_INSTALLATION_ID = "getInstallationId";
-   private static final String ACTION_GET_INSTALLATION_OBJECT_ID = "getInstallationObjectId";
-   private static final String ACTION_GET_SUBSCRIPTIONS = "getSubscriptions";
-   private static final String ACTION_SUBSCRIBE = "subscribe";
-   private static final String ACTION_UNSUBSCRIBE = "unsubscribe";
-   private static final String ACTION_REGISTER_CALLBACK = "registerCallback";
-   private static final String ACTION_REGISTER_FOR_PN = "register";
-      private static final String ACTION_REGISTER_USER = "registerUser";
-   public static final String ACTION_RESET_BADGE = "resetBadge";
+  private static final String ACTION_GET_INSTALLATION_ID = "getInstallationId";
+  private static final String ACTION_GET_INSTALLATION_OBJECT_ID = "getInstallationObjectId";
+  private static final String ACTION_GET_SUBSCRIPTIONS = "getSubscriptions";
+  private static final String ACTION_SUBSCRIBE = "subscribe";
+  private static final String ACTION_UNSUBSCRIBE = "unsubscribe";
+  private static final String ACTION_REGISTER_CALLBACK = "registerCallback";
+  private static final String ACTION_REGISTER_FOR_PN = "register";
+  private static final String ACTION_REGISTER_USER = "registerUser";
+  public static final String ACTION_RESET_BADGE = "resetBadge";
 
-   private static CallbackContext gEventCallback = null;
-   private static Queue<PluginResult> pnQueue = new LinkedList();
+  private static CallbackContext gEventCallback = null;
+  private static Queue<PluginResult> pnQueue = new LinkedList();
 
-   private static CordovaWebView gWebView;
-   private static boolean gForeground = false;
+  private static CordovaWebView gWebView;
+  private static boolean gForeground = false;
+  private static boolean helperPause = false;
 
-   public static final String LOGTAG = "ParsePushPlugin";
+  public static final String LOGTAG = "ParsePushPlugin";
 
-   @Override
-   public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-      if (action.equals(ACTION_REGISTER_CALLBACK)){
-    	   gEventCallback = callbackContext;
+  @Override
+  public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    if (action.equals(ACTION_REGISTER_CALLBACK)) {
+      gEventCallback = callbackContext;
 
-           if(!pnQueue.isEmpty()){
-              flushPNQueue(callbackContext);
-           }
-    	   return true;
+      if (!pnQueue.isEmpty()) {
+        flushPNQueue(callbackContext);
       }
-
-      if (action.equals(ACTION_GET_INSTALLATION_ID)) {
-         this.getInstallationId(callbackContext);
-         return true;
-      }
-
-      if (action.equals(ACTION_GET_INSTALLATION_OBJECT_ID)) {
-         this.getInstallationObjectId(callbackContext);
-         return true;
-      }
-      if (action.equals(ACTION_GET_SUBSCRIPTIONS)) {
-         this.getSubscriptions(callbackContext);
-         return true;
-      }
-      if (action.equals(ACTION_SUBSCRIBE)) {
-         this.subscribe(args.getString(0), callbackContext);
-         return true;
-      }
-      if (action.equals(ACTION_UNSUBSCRIBE)) {
-         this.unsubscribe(args.getString(0), callbackContext);
-         return true;
-      }
-      if (action.equals(ACTION_RESET_BADGE)) {
-           ParsePushPluginReceiver.resetBadge(this.cordova.getActivity().getApplicationContext());
-           return true;
-       }
-      if (action.equals(ACTION_REGISTER_FOR_PN)) {
-         this.registerDeviceForPN(callbackContext);
-         return true;
-      }
-      if (action.equals(ACTION_REGISTER_USER)) {
-         this.registerUser(args.getString(0),callbackContext);
-         return true;
-      }
-      return false;
-   }
-
-
-   private void getInstallationId(final CallbackContext callbackContext) {
-      cordova.getThreadPool().execute(new Runnable() {
-         public void run() {
-            String installationId = ParseInstallation.getCurrentInstallation().getInstallationId();
-            callbackContext.success(installationId);
-         }
-      });
-   }
-
-   private void getInstallationObjectId(final CallbackContext callbackContext) {
-      cordova.getThreadPool().execute(new Runnable() {
-         public void run() {
-            String objectId = ParseInstallation.getCurrentInstallation().getObjectId();
-            callbackContext.success(objectId);
-         }
-      });
-   }
-
-   private void getSubscriptions(final CallbackContext callbackContext) {
-      cordova.getThreadPool().execute(new Runnable() {
-         public void run() {
-            List<String> subscriptions = ParseInstallation.getCurrentInstallation().getList("channels");
-            String subscriptionsString = "";
-            if (subscriptions != null) {
-               subscriptionsString = subscriptions.toString();
-            }
-            callbackContext.success(subscriptionsString);
-         }
-      });
-   }
-
-   private void subscribe(final String channel, final CallbackContext callbackContext) {
-    	//ParsePush.subscribeInBackground(channel);
-      ParsePush.subscribeInBackground(channel, new SaveCallback() {
-    @Override
-    public void done(ParseException e) {
-        if (e == null) {
-            Log.d("com.parse.push",
-            "successfully subscribed to the "+channel+" channel.");
-           callbackContext.success();
-        } else {
-            Log.e("com.parse.push", "failed to subscribe for push to "+channel, e);
-           callbackContext.error("Failed to subscribe for push to "+channel);
-        }    
+      return true;
     }
-});
-         
-   }
+    return true;
 
-   private void unsubscribe(final String channel, final CallbackContext callbackContext) {
-
-       ParsePush.unsubscribeInBackground(channel, new SaveCallback() {
-    @Override
-    public void done(ParseException e) {
-        if (e == null) {
-            Log.d("com.parse.push",
-            "successfully unsubscribed from the "+channel+" channel.");
-           callbackContext.success();
-        } else {
-            Log.e("com.parse.push", "failed to unsubscribe for push from "+channel, e);
-            callbackContext.error("Failed to unsubscribe for push to "+channel);
-        }    
+    if (action.equals(ACTION_GET_INSTALLATION_ID)) {
+      this.getInstallationId(callbackContext);
+      return true;
     }
-          });
-   }
 
-   private void registerDeviceForPN(final CallbackContext callbackContext) {
-       //
-       // just a stub to keep API consistent with iOS.
-       // Device registration is automatically done by the Parse SDK for Android
-       callbackContext.success();
-   }
-                                         
-   private void registerUser(final String username, final CallbackContext callbackContext) {
-      ParseInstallation installation = ParseInstallation.getCurrentInstallation();
-      Log.d("com.parse.push","Adding username "+username+" to installation object.");
-          installation.put("username", username);
-          installation.saveInBackground();
- callbackContext.success();
-   }
+    if (action.equals(ACTION_GET_INSTALLATION_OBJECT_ID)) {
+      this.getInstallationObjectId(callbackContext);
+      return true;
+    }
+    if (action.equals(ACTION_GET_SUBSCRIPTIONS)) {
+      this.getSubscriptions(callbackContext);
+      return true;
+    }
+    if (action.equals(ACTION_SUBSCRIBE)) {
+      this.subscribe(args.getString(0), callbackContext);
+      return true;
+    }
+    if (action.equals(ACTION_UNSUBSCRIBE)) {
+      this.unsubscribe(args.getString(0), callbackContext);
+      return true;
+    }
 
-   /*
-    * keep reusing the saved callback context to call the javascript PN handler
-    */
-   public static void jsCallback(JSONObject _json){
-      jsCallback(_json, "RECEIVE");
-   }
+    if (action.equals(ACTION_RESET_BADGE)) {
+      ParsePushPluginReceiver.resetBadge(this.cordova.getActivity().getApplicationContext());
+      return true;
+    }
+    if (action.equals(ACTION_REGISTER_FOR_PN)) {
+      this.registerDeviceForPN(callbackContext);
+      return true;
+    }
+    if (action.equals(ACTION_REGISTER_USER)) {
+      this.registerUser(args.getString(0), callbackContext);
+      return true;
+    }
+    return false;
+    return false;
+  }
 
-   public static void jsCallback(JSONObject _json, String pushAction){
-      List<PluginResult> cbParams = new ArrayList<PluginResult>();
-    	cbParams.add(new PluginResult(PluginResult.Status.OK, _json));
-    	cbParams.add(new PluginResult(PluginResult.Status.OK, pushAction));
-
-    	PluginResult dataResult = new PluginResult(PluginResult.Status.OK, cbParams);
-      dataResult.setKeepCallback(true);
-
-
-      if(gEventCallback != null){
-         gEventCallback.sendPluginResult(dataResult);
-      } else{
-         //
-         // save the incoming push payloads until gEventCallback is ready.
-         // put a sensible limit on how queue size;
-         if(pnQueue.size() < 10){
-            //pnQueue.add(new PNQueueItem(_json, pushAction));
-            pnQueue.add(dataResult);
-         }
+  private void getInstallationId(final CallbackContext callbackContext) {
+    cordova.getThreadPool().execute(new Runnable() {
+      public void run() {
+        String installationId = ParseInstallation.getCurrentInstallation().getInstallationId();
+        callbackContext.success(installationId);
       }
-   }
+    });
+  }
 
-   private static void flushPNQueue(CallbackContext callbackContext){
-      while(!pnQueue.isEmpty() && callbackContext != null){
-         callbackContext.sendPluginResult(pnQueue.remove());
+  private void getInstallationObjectId(final CallbackContext callbackContext) {
+    cordova.getThreadPool().execute(new Runnable() {
+      public void run() {
+        String objectId = ParseInstallation.getCurrentInstallation().getObjectId();
+        callbackContext.success(objectId);
       }
-   }
+    });
+  }
 
-   @Override
-   protected void pluginInitialize() {
-      gWebView = this.webView;
-      gForeground = true;
-   }
+  private void getSubscriptions(final CallbackContext callbackContext) {
+    cordova.getThreadPool().execute(new Runnable() {
+      public void run() {
+        List<String> subscriptions = ParseInstallation.getCurrentInstallation().getList("channels");
+        JSONArray subscriptionsArray = new JSONArray();
+        if (subscriptions != null) {
+          subscriptionsArray = new JSONArray(subscriptions);
+        }
+        callbackContext.success(subscriptionsArray);
+      }
+    });
+  }
 
-   @Override
-   public void onPause(boolean multitasking) {
-      super.onPause(multitasking);
-      gForeground = false;
-   }
+  private void subscribe(final String channel, final CallbackContext callbackContext) {
+    //ParsePush.subscribeInBackground(channel);
+    ParsePush.subscribeInBackground(channel, new SaveCallback() {
+      @Override
+      public void done(ParseException e) {
+        if (e == null) {
+          Log.d("com.parse.push", "successfully subscribed to the " + channel + " channel.");
+          callbackContext.success();
+        } else {
+          Log.e("com.parse.push", "failed to subscribe for push to " + channel, e);
+          callbackContext.error("Failed to subscribe for push to " + channel);
+        }
+      }
+    });
 
-   @Override
-   public void onResume(boolean multitasking) {
-      super.onResume(multitasking);
-      gForeground = true;
-   }
+  }
 
+  private void unsubscribe(final String channel, final CallbackContext callbackContext) {
 
-   @Override
-   public void onDestroy() {
-      gWebView = null;
-    	gForeground = false;
-      gEventCallback = null;
+    ParsePush.unsubscribeInBackground(channel, new SaveCallback() {
+      @Override
+      public void done(ParseException e) {
+        if (e == null) {
+          Log.d("com.parse.push", "successfully unsubscribed from the " + channel + " channel.");
+          callbackContext.success();
+        } else {
+          Log.e("com.parse.push", "failed to unsubscribe for push from " + channel, e);
+          callbackContext.error("Failed to unsubscribe for push to " + channel);
+        }
+      }
+    });
+  }
 
-    	super.onDestroy();
-   }
+  private void registerDeviceForPN(final CallbackContext callbackContext) {
+    //
+    // just a stub to keep API consistent with iOS.
+    // Device registration is automatically done by the Parse SDK for Android
+    callbackContext.success();
+  }
 
-   public static boolean isInForeground(){
-      return gForeground;
-   }
+  private void registerUser(final String username, final CallbackContext callbackContext) {
+    ParseInstallation installation = ParseInstallation.getCurrentInstallation();
+    Log.d("com.parse.push", "Adding username " + username + " to installation object.");
+    installation.put("username", username);
+    installation.saveInBackground();
+    callbackContext.success();
+  }
+
+  /*
+   * keep reusing the saved callback context to call the javascript PN handler
+   */
+  public static void jsCallback(JSONObject _json) {
+    jsCallback(_json, "RECEIVE");
+  }
+
+  public static void jsCallback(JSONObject _json, String pushAction) {
+    List<PluginResult> cbParams = new ArrayList<PluginResult>();
+    cbParams.add(new PluginResult(PluginResult.Status.OK, _json));
+    cbParams.add(new PluginResult(PluginResult.Status.OK, pushAction));
+
+    PluginResult dataResult = new PluginResult(PluginResult.Status.OK, cbParams);
+    dataResult.setKeepCallback(true);
+
+    if (gEventCallback != null) {
+      gEventCallback.sendPluginResult(dataResult);
+    } else {
+      //
+      // save the incoming push payloads until gEventCallback is ready.
+      // put a sensible limit on how queue size;
+      if (pnQueue.size() < 10) {
+        //pnQueue.add(new PNQueueItem(_json, pushAction));
+        pnQueue.add(dataResult);
+      }
+    }
+  }
+
+  private static void flushPNQueue(CallbackContext callbackContext) {
+    while (!pnQueue.isEmpty() && callbackContext != null) {
+      callbackContext.sendPluginResult(pnQueue.remove());
+    }
+  }
+
+  private static void flushPNQueue() {
+    while (!pnQueue.isEmpty() && gEventCallback != null) {
+      gEventCallback.sendPluginResult(pnQueue.remove());
+    }
+  }
+
+  @Override
+  protected void pluginInitialize() {
+    gWebView = this.webView;
+    gForeground = true;
+  }
+
+  @Override
+  public void onPause(boolean multitasking) {
+    super.onPause(multitasking);
+    gForeground = false;
+    helperPause = true;
+  }
+
+  @Override
+  public void onResume(boolean multitasking) {
+    super.onResume(multitasking);
+    gForeground = true;
+  }
+
+  @Override
+  public void onDestroy() {
+    gWebView = null;
+    gForeground = false;
+    gEventCallback = null;
+    helperPause = false;
+
+    super.onDestroy();
+  }
+
+  public static boolean isInForeground() {
+    return gForeground;
+  }
 }

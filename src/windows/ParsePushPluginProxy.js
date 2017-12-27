@@ -59,6 +59,13 @@ cordova.commandProxy.add("ParsePushPlugin", {
             successCb()
         }, errorCb);
     },
+    unsubscribeAll: function(successCb, errorCb, argArray){
+        var channel = argArray[0];
+
+        ParseUtil.unsubscribeAll(channel).then(function () {
+            successCb()
+        }, errorCb);
+    },
     register: function(successCb, errorCb){
         //noop
     }
@@ -199,7 +206,28 @@ var ParseUtil = {
 
         return ParseUtil._updateChannelsAsync(installationData);
     },
-    unsubscribeAsync: function (channel) {
+    subscribeAsync: function (channel) {
+        var installationData = ParseUtil.getCurrentInstallation();
+
+        if (!installationData || !installationData.objectId) {
+            var msg = "You have not saved an installation. Can't subscribe.";
+            console.error(msg);
+            return WinJS.Promise.wrapError(msg);
+        }
+
+        if (!installationData.channels)
+            installationData.channels = [];
+
+        if (installationData.channels.indexOf(channel) > -1) {
+            console.log("Noop. Already subscribed to channel: " + channel);
+            return WinJS.Promise.as(true);
+        } else {
+            installationData.channels.push(channel);
+        }
+
+        return ParseUtil._updateChannelsAsync(installationData);
+    },
+    unsubscribeAll: function (channel) {
         var installationData = ParseUtil.getCurrentInstallation();
 
         if (!installationData || !installationData.objectId) {
@@ -208,21 +236,9 @@ var ParseUtil = {
             return WinJS.Promise.wrapError(msg);
         }
 
-        if (!installationData.channels) {
-            var msg = "You have not subscribed to any channel. Can't unsubscribe";
-            console.warn(msg);
-            return WinJS.Promise.wrapError(msg);
-        }
-
-        var index = installationData.channels.indexOf(channel);
-        if (index >= 0) {
-            installationData.channels.splice(index, 1);
-        } else {
-            var msg = "You are not subscribed to: '" + channel + "'. Can't unsubscribe";
-            console.warn(msg);
-            return WinJS.Promise.wrapError(msg);
-        }
-
+        installationData.channels = [];
+        installationData.channels.push(channel);
+        
         return ParseUtil._updateChannelsAsync(installationData);
     },
     _updateChannelsAsync: function (installationData) {

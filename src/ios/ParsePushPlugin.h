@@ -17,6 +17,7 @@
 - (void)getSubscriptions: (CDVInvokedUrlCommand *)command;
 - (void)subscribe: (CDVInvokedUrlCommand *)command;
 - (void)unsubscribe: (CDVInvokedUrlCommand *)command;
+- (void)unsubscribeAll: (CDVInvokedUrlCommand *)command;
 - (void)resetBadge: (CDVInvokedUrlCommand *)command;
 - (void)registerUser: (CDVInvokedUrlCommand *)command;
 

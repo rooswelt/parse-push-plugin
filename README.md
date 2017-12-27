@@ -14,7 +14,7 @@ Parse.Push plugin for Cordova/Phonegap/ionic. Works for both hosted Parse.com an
 
 #### Simple Setup
 
-   1. `cordova plugin add https://github.com/taivo/parse-push-plugin`
+   1. `cordova plugin add https://github.com/rooswelt/parse-push-plugin`
    2. Set app id, server URL, and keys as `config.xml` `preference` tags.
    3. Done! No fuss with Objective C, AndroidManifest, or Java
 

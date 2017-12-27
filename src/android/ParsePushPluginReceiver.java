@@ -1,38 +1,31 @@
 package github.taivo.parsepushplugin;
 
-import com.parse.ParsePushBroadcastReceiver;
-import com.parse.ParseAnalytics;
-
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.app.PendingIntent;
-import android.app.Notification;
-import android.app.NotificationManager;
-
-import github.taivo.parsepushplugin.ParsePushConfigReader;
-import github.taivo.parsepushplugin.ParsePushConfigException;
-
-import android.support.v4.app.NotificationCompat;
-
-import android.net.Uri;
-import android.util.Log;
-
-import org.json.JSONObject;
-import org.json.JSONException;
-
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
+import android.util.Log;
+
+import com.parse.ParseAnalytics;
+import com.parse.ParsePushBroadcastReceiver;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 import java.util.Random;
 
-import android.content.SharedPreferences;
-
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
-
+import github.taivo.parsepushplugin.ParsePushConfigReader;
+import github.taivo.parsepushplugin.ParsePushPlugin;
 import me.leolin.shortcutbadger.ShortcutBadger;
 
 public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver {
@@ -143,7 +136,19 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver {
     PendingIntent deleteIntent = PendingIntent.getBroadcast(context, deleteIntentRequestCode, dIntent,
         PendingIntent.FLAG_UPDATE_CURRENT);
 
-    NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+    Notification.Builder builder = new Notification.Builder(context);
+    NotificationManager notificationManager = (NotificationManager) context
+        .getSystemService(Context.NOTIFICATION_SERVICE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      String id = "ParseMultiNotification", name = pnData.optString("title");
+      int importance = NotificationManager.IMPORTANCE_DEFAULT;
+      String desc = pnData.optString("alert");
+
+      NotificationChannel channel = new NotificationChannel(id, name, importance);
+      channel.setDescription(desc);
+      notificationManager.createNotificationChannel(channel);
+      builder = new Notification.Builder(context, id);
+    }
 
     if (pnData.has("title")) {
       builder.setTicker(pnData.optString("title")).setContentTitle(pnData.optString("title"));
@@ -181,11 +186,6 @@ public class ParsePushPluginReceiver extends ParsePushBroadcastReceiver {
 
     builder.setSmallIcon(getSmallIconId(context, intent)).setLargeIcon(getLargeIcon(context, intent))
         .setNumber(nextCount(pnTag)).setContentIntent(contentIntent).setDeleteIntent(deleteIntent).setAutoCancel(true);
-
-    int colorId = context.getResources().getIdentifier(RESOURCE_PUSH_ICON_COLOR, "color", context.getPackageName());
-    if (colorId != 0) {
-      builder.setColor(context.getResources().getColor(colorId));
-    }
 
     return builder.build();
   }

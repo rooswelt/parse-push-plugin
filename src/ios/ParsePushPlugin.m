@@ -93,6 +93,21 @@
     PFInstallation *currentInstallation = [PFInstallation currentInstallation];
     NSString *username = [command.arguments objectAtIndex:0];
     currentInstallation[@"username"] = username;
+}
+
+- (void)unsubscribeAll: (CDVInvokedUrlCommand *)command
+{
+    CDVPluginResult* pluginResult = nil;
+    PFInstallation *currentInstallation = [PFInstallation currentInstallation];
+    NSString *channel = [command.arguments objectAtIndex:0];
+    
+    NSMutableArray *channels = [[PFInstallation currentInstallation].channels mutableCopy];
+    if (!channels) channels = [NSMutableArray array];
+    [channels removeAllObjects];
+    if (channel) [channels addObject:channel];
+    [currentInstallation setObject:channels forKey:@"channels"];
+    
+    currentInstallation[@"municipality"] = @([channel integerValue]);
     [currentInstallation saveInBackground];
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];

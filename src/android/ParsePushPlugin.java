@@ -28,9 +28,10 @@ public class ParsePushPlugin extends CordovaPlugin {
   private static final String ACTION_GET_SUBSCRIPTIONS = "getSubscriptions";
   private static final String ACTION_SUBSCRIBE = "subscribe";
   private static final String ACTION_UNSUBSCRIBE = "unsubscribe";
+  private static final String ACTION_REGISTER_USER = "registerUser";
+  private static final String ACTION_UNSUBSCRIBE_ALL = "unsubscribeAll";
   private static final String ACTION_REGISTER_CALLBACK = "registerCallback";
   private static final String ACTION_REGISTER_FOR_PN = "register";
-  private static final String ACTION_REGISTER_USER = "registerUser";
   public static final String ACTION_RESET_BADGE = "resetBadge";
 
   private static CallbackContext gEventCallback = null;
@@ -48,7 +49,7 @@ public class ParsePushPlugin extends CordovaPlugin {
       gEventCallback = callbackContext;
 
       if (!pnQueue.isEmpty()) {
-        flushPNQueue(callbackContext);
+        flushPNQueue();
       }
       return true;
     }
@@ -75,7 +76,10 @@ public class ParsePushPlugin extends CordovaPlugin {
       this.unsubscribe(args.getString(0), callbackContext);
       return true;
     }
-
+    if (action.equals(ACTION_UNSUBSCRIBE_ALL)) {
+      this.unsubscribeAll(args.getString(0), callbackContext);
+      return true;
+    }
     if (action.equals(ACTION_RESET_BADGE)) {
       ParsePushPluginReceiver.resetBadge(this.cordova.getActivity().getApplicationContext());
       return true;
@@ -88,7 +92,6 @@ public class ParsePushPlugin extends CordovaPlugin {
       this.registerUser(args.getString(0), callbackContext);
       return true;
     }
-    return false;
     return false;
   }
 
@@ -156,6 +159,24 @@ public class ParsePushPlugin extends CordovaPlugin {
     });
   }
 
+  private void unsubscribeAll(final String channel, final CallbackContext callbackContext) {
+
+    cordova.getThreadPool().execute(new Runnable() {
+      public void run() {
+        List<String> subscriptions = ParseInstallation.getCurrentInstallation().getList("channels");
+        if (subscriptions != null) {
+          for (String channelStr : subscriptions) {
+            ParsePush.unsubscribeInBackground(channelStr);
+          }
+        }
+        ParseInstallation.getCurrentInstallation().put("municipality", Integer.parseInt(channel));
+        ParsePush.subscribeInBackground(channel);
+        callbackContext.success();
+      }
+    });
+
+  }
+
   private void registerDeviceForPN(final CallbackContext callbackContext) {
     //
     // just a stub to keep API consistent with iOS.
@@ -182,8 +203,16 @@ public class ParsePushPlugin extends CordovaPlugin {
     List<PluginResult> cbParams = new ArrayList<PluginResult>();
     cbParams.add(new PluginResult(PluginResult.Status.OK, _json));
     cbParams.add(new PluginResult(PluginResult.Status.OK, pushAction));
-
-    PluginResult dataResult = new PluginResult(PluginResult.Status.OK, cbParams);
+    //avoid blank
+    PluginResult dataResult;
+    if (pushAction.equals("OPEN")) {
+      if (helperPause)
+        dataResult = new PluginResult(PluginResult.Status.OK, _json);
+      else
+        dataResult = new PluginResult(PluginResult.Status.OK, cbParams);
+    } else {
+      dataResult = new PluginResult(PluginResult.Status.OK, _json);
+    }
     dataResult.setKeepCallback(true);
 
     if (gEventCallback != null) {
@@ -196,12 +225,6 @@ public class ParsePushPlugin extends CordovaPlugin {
         //pnQueue.add(new PNQueueItem(_json, pushAction));
         pnQueue.add(dataResult);
       }
-    }
-  }
-
-  private static void flushPNQueue(CallbackContext callbackContext) {
-    while (!pnQueue.isEmpty() && callbackContext != null) {
-      callbackContext.sendPluginResult(pnQueue.remove());
     }
   }
 
